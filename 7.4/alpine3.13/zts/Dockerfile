@@ -37,6 +37,8 @@ RUN set -eux; \
 # https://git.alpinelinux.org/aports/tree/main/lighttpd/lighttpd.pre-install?h=3.9-stable
 # https://git.alpinelinux.org/aports/tree/main/nginx/nginx.pre-install?h=3.9-stable
 
+RUN sed -i 's/1024/8192/' /usr/include/x86_64-linux-gnu/bits/typesizes.h
+
 ENV PHP_INI_DIR /usr/local/etc/php
 RUN set -eux; \
 	mkdir -p "$PHP_INI_DIR/conf.d"; \
@@ -90,6 +92,10 @@ RUN set -eux; \
 	\
 	apk del --no-network .fetch-deps
 
+RUN echo '* soft nofile 60000' >> /etc/security/limits.conf
+RUN echo '* hard nofile 60000' >> /etc/security/limits.conf
+RUN ulimit -n 60000
+
 COPY docker-php-source /usr/local/bin/
 
 RUN set -eux; \
@@ -116,6 +122,7 @@ RUN set -eux; \
 	gnuArch="$(dpkg-architecture --query DEB_BUILD_GNU_TYPE)"; \
 	./configure \
 		--build="$gnuArch" \
+		--enable-fd-setsize=8192 \
 		--with-config-file-path="$PHP_INI_DIR" \
 		--with-config-file-scan-dir="$PHP_INI_DIR/conf.d" \
 		\

@@ -39,6 +39,8 @@ RUN set -eux; \
 	; \
 	rm -rf /var/lib/apt/lists/*
 
+RUN sed -i 's/1024/8192/' /usr/include/x86_64-linux-gnu/bits/typesizes.h
+
 ENV PHP_INI_DIR /usr/local/etc/php
 RUN set -eux; \
 	mkdir -p "$PHP_INI_DIR/conf.d"; \
@@ -158,6 +160,10 @@ RUN set -eux; \
 
 COPY docker-php-source /usr/local/bin/
 
+RUN echo '* soft nofile 60000' >> /etc/security/limits.conf
+RUN echo '* hard nofile 60000' >> /etc/security/limits.conf
+RUN ulimit -n 60000
+
 RUN set -eux; \
 	\
 	savedAptMark="$(apt-mark showmanual)"; \
@@ -191,6 +197,7 @@ RUN set -eux; \
 	fi; \
 	./configure \
 		--build="$gnuArch" \
+		--enable-fd-setsize=8192 \
 		--with-config-file-path="$PHP_INI_DIR" \
 		--with-config-file-scan-dir="$PHP_INI_DIR/conf.d" \
 		\
